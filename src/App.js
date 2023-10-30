@@ -1,107 +1,149 @@
 import React, { useState } from "react";
+import { TextField, Button, Typography, Card, Box, MenuItem, Select } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
-import {
-  Typography,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel, 
-  Button,
-  Container,
-} from "@material-ui/core";
-import { formControlClasses } from "@mui/material";
-import { color } from "@mui/system";
 
 const useStyles = makeStyles((theme) => ({
-  staff: {
-    textAlign: "center",
-    padding: theme.spacing(20),
-  },
-  form1: {
+  container: {
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
+    backgroundColor:"pink",
+    
+  },
+  card: {
+    maxWidth: 500,
+    marginBottom: 1000,
+    padding: theme.spacing(),
+    marginTop:30,
   },
   label: {
-    marginBottom: theme.spacing(78)  },
+    marginBottom: theme.spacing(1),
+    marginTop:120,
+  },
   input: {
-    marginBottom: theme.spacing(4),
-    position:"relative",
-    top:12,
-    marginLeft:50,
+    width: "100%",
   },
   button: {
-    marginTop: theme.spacing(3),
+    marginTop: theme.spacing(2),
   },
+  heading:{
+    marginTop : 100,
+  }
 }));
+
+const getFormattedDate = (date) => {
+  const yyyy = date.getFullYear();
+  const mm = String(date.getMonth() + 1).padStart(2, "0");
+  const dd = String(date.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+};
 
 const Staff = () => {
   const classes = useStyles();
-  const [date, setDate] = useState("");
+  const [date, setDate] = useState(getFormattedDate(new Date())); 
   const [name, setName] = useState("");
-  const [attendance, setAttendance] = useState("Attendance");
+  const [attendance, setAttendance] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    console.log("Name:", name);
-    console.log("Attendance:", attendance);
-    console.log("Date:", date);
+  const HandleName = (e) => {
+    setName(e.target.value);
+  };
+
+  const HandleAttendence = (e) => {
+    setAttendance(e.target.value);
+  };
+
+  const HandleDate = (e) => {
+    setDate(e.target.value);
+  };
+
+  const HandleClick = () => {
+    const currentDate = new Date();
+    const selectedDate = new Date(date);
+
+    const diff = Math.floor((currentDate - selectedDate) / (1000 * 60 * 60 * 24));
+
+    if (name && date && attendance && diff >= -3 && diff <= 4) {
+      const data = { name, attendance, date };
+      fetch("http://localhost:3000/Attendence", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      })
+      
+        .then((res) => {
+          alert("Data saved successfully");
+          setName("");
+          setDate(getFormattedDate(new Date())); 
+          setAttendance("Present");
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    } else if (diff > -3) {
+      alert("Selected date is more than 3 days in the past.");
+    } else if (diff < 4) {
+      alert("Selected date is more than 4 days in the future.");
+    } else {
+      alert("Please fill all the information in the form");
+    }
   };
 
   return (
-    <Container className={classes.staff}>
-      <Typography variant="h4" gutterBottom>
-        Staff Management
-      </Typography>
-      <form className={classes.form1} onSubmit={handleSubmit}>
-        <FormControl>
-          <InputLabel>Name</InputLabel>
+    <div className={classes.container}>
+      <Typography variant="h3" className={classes.heading}>
+        Staff Page
+      </Typography><br></br>
+      <Card className={classes.card}>
+        <Box>
+          <label className={classes.label} htmlFor="Name">
+            Name
+          </label>
           <TextField
             id="name"
             type="text"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={HandleName}
             className={classes.input}
           />
-        </FormControl>
-        <FormControl>
-          <InputLabel className={classes.label} htmlFor="attendance"> {/* Change 'Label' to 'InputLabel' */}
-            
-          </InputLabel>
+        </Box>
+        <Box>
+          <label className={classes.label} htmlFor="Attendance">
+            Attendance
+          </label>
           <Select
             id="attendance"
             value={attendance}
-            onChange={(e) => setAttendance(e.target.value)}
+            onChange={HandleAttendence}
             className={classes.input}
           >
-            <MenuItem value="Attendance">Attendance</MenuItem>
             <MenuItem value="Present">Present</MenuItem>
             <MenuItem value="Absent">Absent</MenuItem>
           </Select>
-        </FormControl>
-        <FormControl>
-          <InputLabel className={classes.label} htmlFor="date">
+        </Box>
+        <Box>
+          <label className={classes.label} htmlFor="date">
             Date
-          </InputLabel>
+          </label>
           <TextField
             id="date"
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={HandleDate}
             className={classes.input}
           />
-        </FormControl>
+        </Box>
         <Button
           variant="contained"
           color="primary"
-          type="submit"
           className={classes.button}
+          onClick={HandleClick}
         >
           Submit
         </Button>
-      </form>
-    </Container>
+      </Card>
+    </div>
   );
 };
 
